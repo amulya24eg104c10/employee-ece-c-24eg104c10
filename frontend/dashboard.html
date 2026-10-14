@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Employee Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+body{background:#f5f7fb;}
+.header{background:white;padding:15px 25px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
+.header h1{font-size:22px;color:#2d1b69;}
+.header h1 span{color:#4b2cff;}
+.header-right{display:flex;gap:12px;align-items:center;}
+.logout{padding:8px 16px;background:#f1f1f5;border:0;border-radius:8px;cursor:pointer;font-weight:600;}
+.container{padding:20px;max-width:1200px;margin:auto;}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:20px;}
+.card{background:white;padding:20px;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05);border-left:4px solid #4b2cff;}
+.card h3{font-size:14px;color:#666;margin-bottom:8px;}
+.card h2{font-size:28px;color:#111;}
+.card.purple{border-left-color:#4b2cff;}
+.card.green{border-left-color:#00c853;}
+.card.orange{border-left-color:#ff6d00;}
+.card.red{border-left-color:#d50000;}
+.main{display:grid;grid-template-columns:320px 1fr;gap:20px;}
+@media(max-width:800px){.main{grid-template-columns:1fr;}}
+.form-box,.table-box{background:white;padding:20px;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.05);}
+.form-box h3,.table-box h3{margin-bottom:15px;color:#2d1b69;}
+input{width:100%;padding:12px;margin:8px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f9f9fc;outline:none;}
+input:focus{border-color:#4b2cff;background:white;}
+.add-btn{width:100%;padding:12px;background:#2d1b69;color:white;border:0;border-radius:10px;font-weight:600;margin-top:10px;cursor:pointer;}
+.add-btn:hover{background:#1e124a;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #eee;font-size:14px;}
+th{background:#f8f7ff;color:#2d1b69;font-weight:700;}
+tr:hover{background:#fafaff;}
+.del-btn{background:#ffebee;color:#d50000;border:0;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600;}
+.del-btn:hover{background:#d50000;color:white;}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:#e8eaf6;color:#2d1b69;}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>emp<span>X</span> - Dashboard</h1>
+<div class="header-right">
+<span id="welcomeUser">Admin</span>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
+</div>
+
+<div class="container">
+<div class="stats">
+<div class="card purple"><h3>Total Employees</h3><h2 id="totalEmp">0</h2></div>
+<div class="card green"><h3>Departments</h3><h2 id="totalDept">0</h2></div>
+<div class="card orange"><h3>Active Today</h3><h2>All Active</h2></div>
+<div class="card red"><h3>Project Status</h3><h2>Live</h2></div>
+</div>
+
+<div class="main">
+<div class="form-box">
+<h3>Add New Employee</h3>
+<input id="name" placeholder="Full Name">
+<input id="email" placeholder="Email Address">
+<input id="dept" placeholder="Department (e.g. IT)">
+<input id="role" placeholder="Role (e.g. Developer)">
+<button class="add-btn" onclick="addEmployee()">+ Add Employee</button>
+</div>
+
+<div class="table-box">
+<h3>Employee List</h3>
+<table>
+<thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Dept</th><th>Role</th><th>Action</th></tr></thead>
+<tbody id="empTable"><tr><td colspan="6">Loading...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script>
+const API="http://localhost:8080/api/employees";
+
+function loadEmployees(){
+ fetch(API).then(r=>r.json()).then(data=>{
+  document.getElementById("totalEmp").innerText=data.length;
+  let depts=[...new Set(data.map(e=>e.department))];
+  document.getElementById("totalDept").innerText=depts.length;
+  let html="";
+  data.forEach(emp=>{
+   html+=`<tr>
+    <td>${emp.id}</td>
+    <td><b>${emp.name}</b></td>
+    <td>${emp.email}</td>
+    <td><span class="badge">${emp.department}</span></td>
+    <td>${emp.role}</td>
+    <td><button class="del-btn" onclick="deleteEmp(${emp.id})">Delete</button></td>
+   </tr>`;
+  });
+  document.getElementById("empTable").innerHTML=html||"<tr><td colspan='6'>No employees found</td></tr>";
+ });
+}
+function addEmployee(){
+ const emp={name:document.getElementById("name").value,email:document.getElementById("email").value,department:document.getElementById("dept").value,role:document.getElementById("role").value};
+ if(!emp.name||!emp.email){alert("Enter name and email");return;}
+ fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(emp)}).then(()=>{
+  loadEmployees();
+  document.getElementById("name").value="";document.getElementById("email").value="";document.getElementById("dept").value="";document.getElementById("role").value="";
+  alert("Employee Added!");
+ });
+}
+function deleteEmp(id){ if(confirm("Delete this employee?")){ fetch(`${API}/${id}`,{method:"DELETE"}).then(()=>loadEmployees()); } }
+function logout(){ localStorage.clear(); window.location.href="index.html"; }
+loadEmployees();
+</script>
+</body>
+</html>
